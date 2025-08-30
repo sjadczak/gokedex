@@ -9,9 +9,14 @@ import (
 	"github.com/sjadczak/gokedex/internal/pokeapi"
 )
 
-func startRepl(client *pokeapi.Client) {
-	cmds := makeCommands(client)
+func startRepl() {
+	cfg := &config{
+		client: pokeapi.NewClient(),
+		ls:     newLState(),
+	}
+
 	scanner := bufio.NewScanner(os.Stdin)
+
 	for {
 		fmt.Print("Pokedex > ")
 		scanner.Scan()
@@ -22,9 +27,9 @@ func startRepl(client *pokeapi.Client) {
 		}
 
 		commandName := words[0]
-		command, ok := cmds[commandName]
+		command, ok := makeCommands()[commandName]
 		if ok {
-			err := command.callback()
+			err := command.callback(cfg)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -42,15 +47,18 @@ func cleanInput(text string) []string {
 	return words
 }
 
+type config struct {
+	client *pokeapi.Client
+	ls     *locationState
+}
+
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(cfg *config) error
 }
 
-func makeCommands(client *pokeapi.Client) map[string]cliCommand {
-	cm, cmb := makeMapCommands(client)
-
+func makeCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
 			name:        "help",
@@ -65,12 +73,12 @@ func makeCommands(client *pokeapi.Client) map[string]cliCommand {
 		"map": {
 			name:        "map",
 			description: "Show next 20 locations",
-			callback:    cm,
+			callback:    commandMap,
 		},
 		"mapb": {
 			name:        "mapb",
 			description: "Show previous 20 locations",
-			callback:    cmb,
+			callback:    commandMapb,
 		},
 	}
 }

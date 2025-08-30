@@ -1,63 +1,47 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/sjadczak/gokedex/internal/pokeapi"
 )
 
 type locationState struct {
-	page int
+	prev *string
+	next *string
 }
 
 func newLState() *locationState {
+	dft := "/location-area"
 	ls := &locationState{
-		page: 0,
+		prev: nil,
+		next: &dft,
 	}
 	return ls
 }
 
-func (ls *locationState) inc() {
-	ls.page++
+func llDo(cfg *config, endpoint string) error {
+	ll, err := cfg.client.LocationList(endpoint)
+	if err != nil {
+		return err
+	}
+	cfg.ls.prev = &ll.Previous
+	cfg.ls.next = &ll.Next
+
+	for _, l := range ll.Results {
+		fmt.Printf("%s\n", l.Name)
+	}
+
+	return nil
 }
 
-func (ls *locationState) dec() {
-	ls.page -= 2
-	if ls.page < 0 {
-		ls.page = 0
-	}
+func commandMap(cfg *config) error {
+	return llDo(cfg, *cfg.ls.next)
 }
 
-func makeMapCommands(client *pokeapi.Client) (func() error, func() error) {
-	ls := newLState()
-
-	cm := func() error {
-		s := ls.page*20 + 1
-		e := s + 20
-		for i := s; i < e; i++ {
-			l, err := client.LocationArea(i)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("%s\n", l.Name)
-		}
-		ls.inc()
-		return nil
+func commandMapb(cfg *config) error {
+	if *cfg.ls.prev == "" {
+		return errors.New("You're on the first page!")
 	}
 
-	cmb := func() error {
-		ls.dec()
-		s := ls.page*20 + 1
-		e := s + 20
-		for i := s; i < e; i++ {
-			l, err := client.LocationArea(i)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("%s\n", l.Name)
-		}
-		return nil
-	}
-
-	return cm, cmb
+	return llDo(cfg, *cfg.ls.prev)
 }

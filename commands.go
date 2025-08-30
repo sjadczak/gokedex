@@ -5,24 +5,20 @@ import (
 	"os"
 )
 
-func commandExit() error {
+func commandExit(cfg *config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp() error {
+func commandHelp(cfg *config) error {
+	cmds := makeCommands()
 	fmt.Println()
-	fmt.Println("Welcome to the Pokedex!")
-	fmt.Println("Usage:")
+	fmt.Println("welcome to the pokedex!")
+	fmt.Println("usage:")
 	fmt.Println()
-	// for _, cmd := range cmds {
-	// 	fmt.Printf("%s: %s\n", cmd.name, cmd.description)
-	// }
-	fmt.Println("help: Display commands")
-	fmt.Println("exit: Close the Pokedex")
-	fmt.Println("map: Display the next 20 locations")
-	fmt.Println("mapb: Display the previous 20 locations")
-	fmt.Println()
+	for _, cmd := range cmds {
+		fmt.Printf("%s: %s\n", cmd.name, cmd.description)
+	}
 	return nil
 }
