@@ -7,12 +7,15 @@ import (
 	"strings"
 
 	"github.com/sjadczak/gokedex/internal/pokeapi"
+	"github.com/sjadczak/gokedex/internal/pokeapi/models"
 )
 
 func startRepl() {
+	pd := make(map[string]*models.Pokemon)
 	cfg := &config{
-		client: pokeapi.NewClient(),
-		ls:     newLState(),
+		client:  pokeapi.NewClient(),
+		ls:      newLState(),
+		pokedex: pd,
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -49,8 +52,9 @@ func cleanInput(text string) []string {
 }
 
 type config struct {
-	client *pokeapi.Client
-	ls     *locationState
+	client  *pokeapi.Client
+	ls      *locationState
+	pokedex map[string]*models.Pokemon
 }
 
 type cliCommand struct {
@@ -85,6 +89,16 @@ func makeCommands() map[string]cliCommand {
 			name:        "explore",
 			description: "Show pokemon found in a location",
 			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "Throw a pokeball at a pokemon!",
+			callback:    commandCatch,
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "Check a pokemon you caught",
+			callback:    commandsInspect,
 		},
 	}
 }
