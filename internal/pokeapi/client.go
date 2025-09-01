@@ -4,6 +4,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/sjadczak/gokedex/internal/pokecache"
 )
 
 const (
@@ -12,18 +14,17 @@ const (
 )
 
 type Client struct {
-	c        *apiCache
-	timeout  time.Duration
-	url      string
-	useCache bool
+	url     string
+	timeout time.Duration
+	cache   *pokecache.Cache
 }
 
 func NewClient(options ...func(*Client)) *Client {
+	cache := pokecache.NewCache(10 * time.Second)
 	client := &Client{
-		url:      baseUrl,
-		timeout:  defaultTimeout,
-		useCache: true,
-		c:        NewCache(),
+		url:     baseUrl,
+		timeout: defaultTimeout,
+		cache:   cache,
 	}
 
 	for _, opt := range options {
@@ -33,33 +34,29 @@ func NewClient(options ...func(*Client)) *Client {
 	return client
 }
 
-func WithCustomCacheExpiration(d time.Duration) func(*Client) {
+func WithCustomTimeout(to time.Duration) func(*Client) {
 	return func(c *Client) {
-		cache := NewCache(
-			WithCustomExpiration(d),
-		)
-		c.c = cache
+		c.timeout = to
 	}
 }
 
-func WithoutCache() func(*Client) {
+func WithCustomCacheTimeout(de time.Duration) func(*Client) {
+	cache := pokecache.NewCache(de)
 	return func(c *Client) {
-		c.c = nil
-		c.useCache = false
+		c.cache = cache
 	}
 }
 
 func (c *Client) do(endpoint string) ([]byte, error) {
-	// Check if endpoint has been cached
-	cached, found := c.c.Get(endpoint)
-	if found && c.useCache {
-		return cached, nil
+	if ce, ok := c.cache.Get(endpoint); ok {
+		return ce, nil
 	}
 
 	req, err := http.NewRequest(http.MethodGet, c.url+endpoint, nil)
 	if err != nil {
 		return []byte{}, err
 	}
+
 	client := &http.Client{Timeout: c.timeout}
 
 	res, err := client.Do(req)
@@ -73,6 +70,7 @@ func (c *Client) do(endpoint string) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	c.c.Set(endpoint, body)
+	c.cache.Set(endpoint, body)
+
 	return body, nil
 }
