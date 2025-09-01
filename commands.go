@@ -22,3 +22,16 @@ func commandHelp(cfg *config, params ...string) error {
 	}
 	return nil
 }
+
+func commandPokedex(cfg *config, params ...string) error {
+	if len(cfg.pokedex) == 0 {
+		fmt.Println("you're Pokedex is empty, go catch some pokemon!")
+		return nil
+	}
+
+	fmt.Println("Your Pokedex:")
+	for pokemon := range cfg.pokedex {
+		fmt.Printf(" -%s\n", pokemon)
+	}
+	return nil
+}
