@@ -54,23 +54,39 @@ func (c *Client) do(endpoint string) ([]byte, error) {
 
 	req, err := http.NewRequest(http.MethodGet, c.url+endpoint, nil)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 
 	client := &http.Client{Timeout: c.timeout}
 
 	res, err := client.Do(req)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 	defer res.Body.Close()
 
+	err = checkResponse(res)
+	if err != nil {
+		return nil, err
+	}
+
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 
 	c.cache.Set(endpoint, body)
 
 	return body, nil
+}
+
+func checkResponse(res *http.Response) error {
+	switch res.StatusCode {
+	case http.StatusOK:
+		return nil
+	case http.StatusNotFound:
+		return ErrNotFound
+	default:
+		return ErrOther
+	}
 }

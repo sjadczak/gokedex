@@ -27,8 +27,8 @@ func (c *Client) LocationList(endpoint string) (*models.LocationList, error) {
 	return &locations, nil
 }
 
-func (c *Client) LocationArea(id int) (*models.LocationArea, error) {
-	endpoint := fmt.Sprintf("location-area/%d", id)
+func (c *Client) LocationArea(id string) (*models.LocationArea, error) {
+	endpoint := fmt.Sprintf("location-area/%s", id)
 
 	data, err := c.do(endpoint)
 	if err != nil {

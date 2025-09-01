@@ -34,12 +34,13 @@ func llDo(cfg *config, endpoint string) error {
 	return nil
 }
 
-func commandMap(cfg *config) error {
+func commandMap(cfg *config, params ...string) error {
 	return llDo(cfg, *cfg.ls.next)
 }
 
-func commandMapb(cfg *config) error {
+func commandMapb(cfg *config, params ...string) error {
 	if *cfg.ls.prev == "" {
+		//lint:ignore ST1005 Being written to user
 		return errors.New("You're on the first page!")
 	}
 
